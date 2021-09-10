@@ -1,5 +1,6 @@
 package com.andrei.sfgrestbrewery.web.controller;
 
+import com.andrei.sfgrestbrewery.bootstrap.BeerLoader;
 import com.andrei.sfgrestbrewery.web.model.BeerDto;
 import com.andrei.sfgrestbrewery.web.model.BeerPagedList;
 import org.assertj.core.api.Assertions;
@@ -63,6 +64,26 @@ public class WebClientIT {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         Mono<BeerDto> beerDtoMono = webClient.get().uri("api/v1/beer/1")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(BeerDto.class);
+
+        beerDtoMono.subscribe(beerDto -> {
+            assertThat(beerDto).isNotNull();
+            assertThat(beerDto.getBeerName()).isNotNull();
+
+            countDownLatch.countDown();
+        });
+
+        countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+        assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+
+
+    @Test
+    void getBeerByUPC() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        Mono<BeerDto> beerDtoMono = webClient.get().uri("api/v1/beerUpc/"+ BeerLoader.BEER_1_UPC)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(BeerDto.class);
 
