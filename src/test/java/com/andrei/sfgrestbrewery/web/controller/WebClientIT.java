@@ -3,20 +3,23 @@ package com.andrei.sfgrestbrewery.web.controller;
 import com.andrei.sfgrestbrewery.bootstrap.BeerLoader;
 import com.andrei.sfgrestbrewery.web.model.BeerDto;
 import com.andrei.sfgrestbrewery.web.model.BeerPagedList;
-import org.assertj.core.api.Assertions;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.http.client.HttpClient;
 
+import java.math.BigDecimal;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -53,7 +56,7 @@ public class WebClientIT {
             countDownLatch.countDown();
         });
 
-        countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+        countDownLatch.await(1000, MILLISECONDS);
         assertThat(countDownLatch.getCount()).isEqualTo(0);
     }
 
@@ -75,7 +78,7 @@ public class WebClientIT {
             countDownLatch.countDown();
         });
 
-        countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+        countDownLatch.await(1000, MILLISECONDS);
         assertThat(countDownLatch.getCount()).isEqualTo(0);
     }
 
@@ -97,7 +100,7 @@ public class WebClientIT {
             countDownLatch.countDown();
         });
 
-        countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+        countDownLatch.await(1000, MILLISECONDS);
         assertThat(countDownLatch.getCount()).isEqualTo(0);
     }
 
@@ -116,7 +119,7 @@ public class WebClientIT {
             countDownLatch.countDown();
         });
 
-        countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+        countDownLatch.await(1000, MILLISECONDS);
         assertThat(countDownLatch.getCount()).isEqualTo(0);
     }
 
@@ -136,7 +139,65 @@ public class WebClientIT {
             countDownLatch.countDown();
         });
 
-        countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+        countDownLatch.await(1000, MILLISECONDS);
         assertThat(countDownLatch.getCount()).isEqualTo(0);
     }
+
+    @SneakyThrows
+    @Test
+    void saveNewBeer() {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        BeerDto beerDto = BeerDto.builder()
+                .beerName("Beer name")
+                .upc("1234567")
+                .beerStyle("PALE_ALE")
+                .price(new BigDecimal("8.99"))
+                .build();
+
+        final Mono<ResponseEntity<Void>> beerResponseMono = webClient.post()
+                .uri("/api/v1/beer")
+                .accept(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(beerDto))
+                .retrieve()
+                .toBodilessEntity();
+
+        beerResponseMono.publishOn(Schedulers.parallel())
+                .subscribe(responseEntity -> {
+                    assertThat(responseEntity.getStatusCode().is2xxSuccessful());
+                    countDownLatch.countDown();
+                });
+
+        countDownLatch.await(1000, MILLISECONDS);
+        assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+
+    @SneakyThrows
+    @Test
+    void saveNewBeerBadRequest() {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        BeerDto beerDto = BeerDto.builder()
+                .price(new BigDecimal("8.99"))
+                .build();
+
+        final Mono<ResponseEntity<Void>> beerResponseMono = webClient.post()
+                .uri("/api/v1/beer")
+                .accept(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(beerDto))
+                .retrieve()
+                .toBodilessEntity();
+
+        beerResponseMono.publishOn(Schedulers.parallel())
+                .doOnError(throwable -> countDownLatch.countDown())
+                .subscribe(responseEntity -> {
+                });
+
+        countDownLatch.await(1000, MILLISECONDS);
+        assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+
+
+    @Test
+    void updateBeerById() {
+    }
+
 }

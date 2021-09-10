@@ -89,14 +89,6 @@ class BeerControllerTest {
     }
 
     @Test
-    void saveNewBeer() {
-    }
-
-    @Test
-    void updateBeerById() {
-    }
-
-    @Test
     void deleteBeerById() {
     }
 }
