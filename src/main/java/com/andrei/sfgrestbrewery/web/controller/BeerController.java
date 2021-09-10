@@ -47,9 +47,9 @@ public class BeerController {
             pageSize = DEFAULT_PAGE_SIZE;
         }
 
-        BeerPagedList beerList = beerService.listBeers(beerName, beerStyle, PageRequest.of(pageNumber, pageSize), showInventoryOnHand);
+        final Mono<BeerPagedList> beerPagedListMono = beerService.listBeers(beerName, beerStyle, PageRequest.of(pageNumber, pageSize), showInventoryOnHand);
 
-        return ResponseEntity.ok(Mono.just(beerList));
+        return ResponseEntity.ok(beerPagedListMono);
     }
 
     @GetMapping("beer/{beerId}")
