@@ -25,7 +25,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Beer implements Persistable {
+public class Beer {
 
     @Id
     private Integer id;
@@ -39,24 +39,7 @@ public class Beer implements Persistable {
     private Integer quantityOnHand;
     private BigDecimal price;
 
+    private LocalDateTime createdDate;
 
-    @CreatedDate
-    private Timestamp createdDate;
-
-    @LastModifiedDate
-    private Timestamp lastModifiedDate;
-
-    @Transient
-    private boolean newBeer;
-
-    @Override
-    @Transient
-    public boolean isNew() {
-        return this.newBeer || id == null;
-    }
-
-    public Beer setAsNew(){
-        this.newBeer = true;
-        return this;
-    }
+    private LocalDateTime lastModifiedDate;
 }
