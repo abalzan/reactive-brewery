@@ -131,7 +131,7 @@ public class WebClientIT {
     void getBeerByUPC() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
-        Mono<BeerDto> beerDtoMono = webClient.get().uri("api/v1/beerUpc/"+ BeerLoader.BEER_1_UPC)
+        Mono<BeerDto> beerDtoMono = webClient.get().uri("api/v1/beerUpc/"+ BeerLoader.BEER_2_UPC)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(BeerDto.class);
 
@@ -271,6 +271,41 @@ public class WebClientIT {
                 });
 
         countDownLatch.countDown();
+
+        countDownLatch.await(1000, TimeUnit.MILLISECONDS);
+        assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+
+
+    @Test
+    void testDeleteBeer() throws InterruptedException {
+
+        CountDownLatch countDownLatch = new CountDownLatch(3);
+
+        webClient.get().uri("/api/v1/beer")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(BeerPagedList.class)
+                .publishOn(Schedulers.single())
+                .subscribe(pagedList -> {
+                    countDownLatch.countDown();
+
+                    BeerDto beerDto = pagedList.getContent().get(0);
+
+                    webClient.delete().uri("/api/v1/beer/" + beerDto.getId() )
+                            .retrieve().toBodilessEntity()
+                            .flatMap(responseEntity -> {
+                                countDownLatch.countDown();
+
+                                return webClient.get().uri("/api/v1/beer/" + beerDto.getId())
+                                        .accept(MediaType.APPLICATION_JSON)
+                                        .retrieve().bodyToMono(BeerDto.class);
+                            }) .subscribe(savedDto -> {
+
+                    }, throwable -> {
+                        countDownLatch.countDown();
+                    });
+                });
 
         countDownLatch.await(1000, TimeUnit.MILLISECONDS);
         assertThat(countDownLatch.getCount()).isEqualTo(0);
