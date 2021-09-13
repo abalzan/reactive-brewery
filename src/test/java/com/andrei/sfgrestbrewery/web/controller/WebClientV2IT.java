@@ -1,5 +1,6 @@
 package com.andrei.sfgrestbrewery.web.controller;
 
+import com.andrei.sfgrestbrewery.bootstrap.BeerLoader;
 import com.andrei.sfgrestbrewery.web.functional.BeerRouterConfig;
 import com.andrei.sfgrestbrewery.web.model.BeerDto;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,5 +67,44 @@ public class WebClientV2IT {
         countDownLatch.await(2000, TimeUnit.MILLISECONDS);
         assertThat(countDownLatch.getCount()).isEqualTo(0);
     }
+
+    @Test
+    void getBeerByUpc() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        Mono<BeerDto> beerDtoMono = webClient.get().uri("/api/v2/beerUpc" + "/" + BeerLoader.BEER_2_UPC)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(BeerDto.class);
+
+        beerDtoMono.subscribe(beer -> {
+            assertThat(beer).isNotNull();
+            assertThat(beer.getBeerName()).isNotNull();
+
+            countDownLatch.countDown();
+        });
+
+        countDownLatch.await(2000, TimeUnit.MILLISECONDS);
+        assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+
+    @Test
+    void getBeerUpcNotFound() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        Mono<BeerDto> beerDtoMono = webClient.get().uri("/api/v2/beerUpc" + "/123123")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(BeerDto.class);
+
+        beerDtoMono.subscribe(beer -> {
+
+        }, throwable -> {
+            countDownLatch.countDown();
+        });
+
+        countDownLatch.await(2000, TimeUnit.MILLISECONDS);
+        assertThat(countDownLatch.getCount()).isEqualTo(0);
+    }
+
+
 
 }

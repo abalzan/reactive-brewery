@@ -13,9 +13,16 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 public class BeerRouterConfig {
 
     public static final String BEER_V2_URL = "/api/v2/beer";
+    public static final String BEER_UPC_V2_URL = "/api/v2/beerUpc/{upc}";
     public static final String BEER_V2_URL_ID = "/api/v2/beer/{beerId}";
+
     @Bean
     public RouterFunction<ServerResponse> beerRoutesV2(BeerHandlerV2 handler) {
-        return route().GET(BEER_V2_URL_ID, accept(APPLICATION_JSON), handler::getBeerById).build();
+        return route()
+                .GET(BEER_V2_URL_ID, accept(APPLICATION_JSON), handler::getBeerById)
+                .GET(BEER_UPC_V2_URL, accept(APPLICATION_JSON), handler::getBeerByUpc)
+                .build();
     }
+
+
 }
