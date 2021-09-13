@@ -1,8 +1,7 @@
 package com.andrei.sfgrestbrewery.services;
 
-import com.andrei.sfgrestbrewery.repositories.BeerRepository;
-import com.andrei.sfgrestbrewery.web.controller.NotFoundException;
 import com.andrei.sfgrestbrewery.domain.Beer;
+import com.andrei.sfgrestbrewery.repositories.BeerRepository;
 import com.andrei.sfgrestbrewery.web.mappers.BeerMapper;
 import com.andrei.sfgrestbrewery.web.model.BeerDto;
 import com.andrei.sfgrestbrewery.web.model.BeerPagedList;
@@ -10,7 +9,6 @@ import com.andrei.sfgrestbrewery.web.model.BeerStyleEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Query;
@@ -18,9 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -90,14 +86,21 @@ public class BeerServiceImpl implements BeerService {
 
     @Override
     public Mono<BeerDto> updateBeer(Integer beerId, BeerDto beerDto) {
-        return beerRepository.findById(beerId).map(beer -> {
+        return beerRepository.findById(beerId)
+                .defaultIfEmpty(Beer.builder().build())
+                .map(beer -> {
             beer.setBeerName(beerDto.getBeerName());
             beer.setBeerStyle(BeerStyleEnum.valueOf(beerDto.getBeerStyle()));
             beer.setPrice(beerDto.getPrice());
             beer.setUpc(beerDto.getUpc());
             beer.setLastModifiedDate(LocalDateTime.now());
             return beer;
-        }).flatMap(beerRepository::save)
+        }).flatMap(updatedBeer ->  {
+            if(updatedBeer.getId() != null) {
+                return beerRepository.save(updatedBeer);
+            }
+            return Mono.just(updatedBeer);
+        })
                 .map(beerMapper::beerToBeerDto);
     }
 

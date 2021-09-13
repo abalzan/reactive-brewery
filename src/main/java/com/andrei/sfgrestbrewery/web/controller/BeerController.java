@@ -14,6 +14,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -84,9 +85,20 @@ public class BeerController {
     }
 
     @PutMapping("beer/{beerId}")
-    public ResponseEntity<Void> updateBeerById(@PathVariable("beerId") Integer beerId, @RequestBody @Validated BeerDto beerDto){
-        beerService.updateBeer(beerId, beerDto).subscribe();
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> updateBeerById(@PathVariable("beerId") Integer beerId, @RequestBody @Validated BeerDto beerDto) {
+        AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+
+        beerService.updateBeer(beerId, beerDto).subscribe(savedBeerDto -> {
+            if(savedBeerDto.getId() != null) {
+                atomicBoolean.set(true);
+            }
+        });
+
+        if(atomicBoolean.get()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("beer/{beerId}")
