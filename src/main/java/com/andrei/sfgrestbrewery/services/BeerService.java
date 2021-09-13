@@ -4,6 +4,7 @@ import com.andrei.sfgrestbrewery.web.model.BeerDto;
 import com.andrei.sfgrestbrewery.web.model.BeerPagedList;
 import com.andrei.sfgrestbrewery.web.model.BeerStyleEnum;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -25,4 +26,6 @@ public interface BeerService {
     Mono<BeerDto> getByUpc(String upc);
 
     void deleteBeerById(Integer beerId);
+
+    Mono<Void> reactiveDeleteById(Integer beerId);
 }

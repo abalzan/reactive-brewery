@@ -1,6 +1,7 @@
 package com.andrei.sfgrestbrewery.web.functional;
 
 import com.andrei.sfgrestbrewery.services.BeerService;
+import com.andrei.sfgrestbrewery.web.controller.NotFoundException;
 import com.andrei.sfgrestbrewery.web.model.BeerDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,4 +77,11 @@ public class BeerHandlerV2 {
                });
     }
 
+    public Mono<ServerResponse> deleteBeer(ServerRequest request) {
+        return beerService.reactiveDeleteById(Integer.valueOf(request.pathVariable("beerId")))
+                .flatMap(voidMono -> {
+                    return ServerResponse.ok().build();
+                }).onErrorResume(e -> e instanceof NotFoundException, e -> ServerResponse.notFound().build());
+
+    }
 }

@@ -2,6 +2,7 @@ package com.andrei.sfgrestbrewery.services;
 
 import com.andrei.sfgrestbrewery.domain.Beer;
 import com.andrei.sfgrestbrewery.repositories.BeerRepository;
+import com.andrei.sfgrestbrewery.web.controller.NotFoundException;
 import com.andrei.sfgrestbrewery.web.mappers.BeerMapper;
 import com.andrei.sfgrestbrewery.web.model.BeerDto;
 import com.andrei.sfgrestbrewery.web.model.BeerPagedList;
@@ -14,6 +15,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -120,5 +122,15 @@ public class BeerServiceImpl implements BeerService {
     @Override
     public void deleteBeerById(Integer beerId) {
         beerRepository.deleteById(beerId).subscribe();
+    }
+
+    @Override
+    public Mono<Void> reactiveDeleteById(Integer beerId) {
+        return beerRepository.findById(beerId)
+                .switchIfEmpty(Mono.error(new NotFoundException()))
+                .map(beer -> {
+                    return beer.getId();
+                })
+                .flatMap(beerRepository::deleteById);
     }
 }
